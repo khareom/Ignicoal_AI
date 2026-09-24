@@ -1,0 +1,34 @@
+# Python virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Large binaries & external archives
+.tools/
+Friend's code/
+*.zip
+*.tar.gz
+*.rar
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE configuration
+.vscode/
+.idea/
+
+# Streamlit local config
+.streamlit/secrets.toml

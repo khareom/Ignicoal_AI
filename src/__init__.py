@@ -1,0 +1,1 @@
+"""IgniCoal AI package."""
