@@ -11,9 +11,14 @@ import pickle
 import numpy as np
 import pandas as pd
 import streamlit as st
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+
+try:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    HAS_MPL = True
+except Exception:
+    HAS_MPL = False
 
 # Ensure root is in PATH
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -658,19 +663,24 @@ def main():
         c_left, c_right = st.columns([1, 1.2])
         with c_left:
             st.markdown("#### Classification Confidence")
-            fig_p, ax_p = plt.subplots(figsize=(5, 3.5))
-            c_map = {'Low': '#22c55e', 'Moderate': '#f59e0b', 'High': '#ef4444'}
-            bar_colors = [c_map[c] for c in prob_df['SCS Susceptibility Class']]
-            bars = ax_p.bar(prob_df['SCS Susceptibility Class'], prob_df['Inference Probability'] * 100, color=bar_colors, edgecolor='black', alpha=0.85)
-            ax_p.set_ylabel('Confidence (%)', fontweight='bold')
-            ax_p.set_ylim(0, 105)
-            for bar in bars:
-                h = bar.get_height()
-                ax_p.text(bar.get_x() + bar.get_width()/2, h + 2, f"{h:.1f}%", ha='center', fontweight='bold', fontsize=10)
-            ax_p.grid(axis='y', linestyle=':', alpha=0.6)
-            plt.tight_layout()
-            st.pyplot(fig_p)
-            plt.close()
+            if HAS_MPL:
+                fig_p, ax_p = plt.subplots(figsize=(5, 3.5))
+                c_map = {'Low': '#22c55e', 'Moderate': '#f59e0b', 'High': '#ef4444'}
+                bar_colors = [c_map.get(c, '#3a86ff') for c in prob_df['SCS Susceptibility Class']]
+                bars = ax_p.bar(prob_df['SCS Susceptibility Class'], prob_df['Inference Probability'] * 100, color=bar_colors, edgecolor='black', alpha=0.85)
+                ax_p.set_ylabel('Confidence (%)', fontweight='bold')
+                ax_p.set_ylim(0, 105)
+                for bar in bars:
+                    h = bar.get_height()
+                    ax_p.text(bar.get_x() + bar.get_width()/2, h + 2, f"{h:.1f}%", ha='center', fontweight='bold', fontsize=10)
+                ax_p.grid(axis='y', linestyle=':', alpha=0.6)
+                plt.tight_layout()
+                st.pyplot(fig_p)
+                plt.close()
+            else:
+                prob_plot = prob_df.copy()
+                prob_plot['Confidence (%)'] = prob_plot['Inference Probability'] * 100
+                st.bar_chart(prob_plot.set_index('SCS Susceptibility Class')['Confidence (%)'])
 
         with c_right:
             st.markdown("#### Actionable Mine Management Advisory")
@@ -702,31 +712,37 @@ def main():
         st.subheader("Time-Resolved Photoacoustic Waveform")
         t_us = time_axis * 1e6
         
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 6), sharex=True)
-        
-        # Raw Signal
-        ax1.plot(t_us, selected_sig * 1000, color='#e63946', lw=1.2, label='Raw Sensor Signal')
-        ax1.axvspan(0, 1.2, color='gray', alpha=0.25, label='Trigger Artifact Region (0 - 1.2 µs)')
-        ax1.axvline(0.06, color='black', linestyle='--', alpha=0.7, label='Trigger Pulse Spike (60 ns)')
-        ax1.set_ylabel('Amplitude (mV)', fontweight='bold')
-        ax1.set_title(f'Raw Signal', fontweight='bold', fontsize=11)
-        ax1.legend(loc='upper right', frameon=True)
-        ax1.grid(True, linestyle=':', alpha=0.5)
+        if HAS_MPL:
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 6), sharex=True)
+            
+            # Raw Signal
+            ax1.plot(t_us, selected_sig * 1000, color='#e63946', lw=1.2, label='Raw Sensor Signal')
+            ax1.axvspan(0, 1.2, color='gray', alpha=0.25, label='Trigger Artifact Region (0 - 1.2 µs)')
+            ax1.axvline(0.06, color='black', linestyle='--', alpha=0.7, label='Trigger Pulse Spike (60 ns)')
+            ax1.set_ylabel('Amplitude (mV)', fontweight='bold')
+            ax1.set_title(f'Raw Signal', fontweight='bold', fontsize=11)
+            ax1.legend(loc='upper right', frameon=True)
+            ax1.grid(True, linestyle=':', alpha=0.5)
 
-        # Processed Signal
-        ax2.plot(t_us, proc_sig * 1000, color='#3a86ff', lw=1.5, label='Trigger-Blanked & Denoised PA Wave')
-        tp_us = all_feats['peak_time_proc'] * 1e6
-        ax2.plot(tp_us, proc_sig[int(tp_us*50)] * 1000, 'ro', markersize=8, label=f'Acoustic Peak Arrival (Tp = {tp_us:.2f} µs)')
-        # ax2.axvline(8.0, color='darkgreen', linestyle=':', lw=2, label='Mentor 400th Bin Baseline (8.0 µs -> 750 m/s)')
-        ax2.set_xlabel('Time (µs)', fontweight='bold')
-        ax2.set_ylabel('Amplitude (mV)', fontweight='bold')
-        ax2.set_title('Processed Photoacoustic Signal', fontweight='bold', fontsize=11)
-        ax2.legend(loc='upper right', frameon=True)
-        ax2.grid(True, linestyle=':', alpha=0.5)
+            # Processed Signal
+            ax2.plot(t_us, proc_sig * 1000, color='#3a86ff', lw=1.5, label='Trigger-Blanked & Denoised PA Wave')
+            tp_us = all_feats['peak_time_proc'] * 1e6
+            ax2.plot(tp_us, proc_sig[int(tp_us*50)] * 1000, 'ro', markersize=8, label=f'Acoustic Peak Arrival (Tp = {tp_us:.2f} µs)')
+            ax2.set_xlabel('Time (µs)', fontweight='bold')
+            ax2.set_ylabel('Amplitude (mV)', fontweight='bold')
+            ax2.set_title('Processed Photoacoustic Signal', fontweight='bold', fontsize=11)
+            ax2.legend(loc='upper right', frameon=True)
+            ax2.grid(True, linestyle=':', alpha=0.5)
 
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+        else:
+            wave_df = pd.DataFrame({
+                'Raw Signal (mV)': selected_sig * 1000,
+                'Processed Signal (mV)': proc_sig * 1000
+            }, index=np.round(t_us, 2))
+            st.line_chart(wave_df)
 
         # Top 4 Ranked Features per Property
         st.markdown("#### Top Ranked Predictive Features per Target Property")
