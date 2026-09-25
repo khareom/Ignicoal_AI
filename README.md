@@ -5,7 +5,7 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 Coal spontaneous combustion in stockpiles and underground mines poses severe safety hazards and environmental risks. Traditional proximate analysis (ISO/ASTM proximate analysis and crossing point temperature methods) is destructive, labor-intensive, and takes days to yield results.
 
@@ -18,7 +18,7 @@ Coal spontaneous combustion in stockpiles and underground mines poses severe saf
 
 ---
 
-## 🔬 Scientific Foundations
+## Scientific Foundations
 
 Based on research methodologies published in:
 - *Photoacoustic Sensing in Sustainable Mining: Predicting Coal Susceptibility to Spontaneous Combustion* (IEEE SENSORS 2025)
@@ -32,7 +32,7 @@ Based on research methodologies published in:
 
 ---
 
-## 🚀 Quickstart & Local Installation
+## Quickstart & Local Installation
 
 ### 1. Clone the repository
 ```bash
@@ -58,7 +58,7 @@ streamlit run app/app.py
 
 ---
 
-## 📂 Project Architecture
+## Project Architecture
 
 ```text
 ├── app/
@@ -83,14 +83,3 @@ streamlit run app/app.py
 ```
 
 ---
-
-## 🌐 Deploy to Streamlit Community Cloud (Free 24/7 Hosting)
-
-1. Push this repository to your GitHub account.
-2. Visit [share.streamlit.io](https://share.streamlit.io) and log in with your GitHub account.
-3. Click **"New app"**.
-4. Select your repository, set the branch to `main`, and specify the main file path as:
-   ```text
-   app/app.py
-   ```
-5. Click **"Deploy!"** — your dashboard will be live on a permanent public URL (e.g. `https://<your-app-name>.streamlit.app`).
