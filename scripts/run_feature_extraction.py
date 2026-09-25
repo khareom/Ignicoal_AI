@@ -70,8 +70,8 @@ def main():
         all_features_list.append(all_feats)
 
         # Exact subsets from FeatureList_1.pptx
-        # (p2p_tdb3 excluded from active thermal subset as requested, but available in all_feats)
-        thermal_feats = fe.get_feature_subset(all_feats, 'thermal', include_p2p_tdb3=False)
+        # (p2p_tdb3 included in active thermal subset matching FeatureList_1.pptx)
+        thermal_feats = fe.get_feature_subset(all_feats, 'thermal', include_p2p_tdb3=True)
         carbon_feats = fe.get_feature_subset(all_feats, 'carbon')
         ash_feats = fe.get_feature_subset(all_feats, 'ash')
 

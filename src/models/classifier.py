@@ -37,6 +37,16 @@ def get_classification_models() -> dict:
     Returns a dictionary of candidate classification models wrapped in scaling pipelines.
     """
     return {
+        'Extra Trees (1000 Trees)': Pipeline([
+            ('scaler', StandardScaler()),
+            ('classifier', ExtraTreesClassifier(n_estimators=1000, random_state=42, n_jobs=-1))
+        ]),
+        'Extra Trees': ExtraTreesClassifier(
+            n_estimators=150, max_depth=8, min_samples_split=3, random_state=42
+        ),
+        'Random Forest': RandomForestClassifier(
+            n_estimators=150, max_depth=8, min_samples_split=3, random_state=42
+        ),
         'Fine KNN (k=5)': Pipeline([
             ('scaler', StandardScaler()),
             ('classifier', KNeighborsClassifier(n_neighbors=5, metric='euclidean', weights='distance'))
@@ -45,12 +55,6 @@ def get_classification_models() -> dict:
             ('scaler', StandardScaler()),
             ('classifier', SVC(kernel='rbf', C=10.0, probability=True, random_state=42))
         ]),
-        'Random Forest': RandomForestClassifier(
-            n_estimators=150, max_depth=8, min_samples_split=3, random_state=42
-        ),
-        'Extra Trees': ExtraTreesClassifier(
-            n_estimators=150, max_depth=8, min_samples_split=3, random_state=42
-        ),
         'Ensemble Boosted Trees': GradientBoostingClassifier(
             n_estimators=120, learning_rate=0.08, max_depth=4, random_state=42
         ),

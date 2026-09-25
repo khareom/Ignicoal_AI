@@ -495,6 +495,40 @@ def format_feature_val(feat_name, val):
         return f"{val:.4f}"
 
 
+def get_model_feature_importances(model_obj, num_features: int):
+    """
+    Safely extracts feature importances from a raw estimator, Pipeline, or VotingRegressor ensemble.
+    Falls back to uniform weights if not directly available.
+    """
+    if hasattr(model_obj, 'named_steps'):
+        if 'regressor' in model_obj.named_steps:
+            estimator = model_obj.named_steps['regressor']
+        elif 'classifier' in model_obj.named_steps:
+            estimator = model_obj.named_steps['classifier']
+        else:
+            estimator = model_obj.steps[-1][1]
+    elif hasattr(model_obj, 'steps'):
+        estimator = model_obj.steps[-1][1]
+    else:
+        estimator = model_obj
+
+    if hasattr(estimator, 'feature_importances_'):
+        return estimator.feature_importances_
+    elif hasattr(estimator, 'estimators_'):
+        imps = []
+        for est in estimator.estimators_:
+            if hasattr(est, 'feature_importances_'):
+                imps.append(est.feature_importances_)
+        if imps:
+            return np.mean(imps, axis=0)
+    elif hasattr(estimator, 'coef_'):
+        coef = np.abs(estimator.coef_).ravel()
+        total = np.sum(coef)
+        return coef / (total + 1e-12)
+
+    return np.ones(num_features) / max(num_features, 1)
+
+
 def main():
     assets = load_all_models_and_data()
     signals = assets['signals']
@@ -752,7 +786,8 @@ def main():
 
         with col_ash:
             st.markdown("##### Ash Content Features")
-            ash_ranked = sorted(zip(assets['ash_pkg']['features'], assets['ash_pkg']['model'].feature_importances_), key=lambda x: x[1], reverse=True)[:4]
+            ash_imps = get_model_feature_importances(assets['ash_pkg']['model'], len(assets['ash_pkg']['features']))
+            ash_ranked = sorted(zip(assets['ash_pkg']['features'], ash_imps), key=lambda x: x[1], reverse=True)[:4]
             ash_df = pd.DataFrame([
                 {
                     'Rank': f"{i}",
@@ -766,7 +801,8 @@ def main():
 
         with col_carb:
             st.markdown("##### Fixed Carbon Features")
-            carb_ranked = sorted(zip(assets['carbon_pkg']['features'], assets['carbon_pkg']['model'].feature_importances_), key=lambda x: x[1], reverse=True)[:4]
+            carb_imps = get_model_feature_importances(assets['carbon_pkg']['model'], len(assets['carbon_pkg']['features']))
+            carb_ranked = sorted(zip(assets['carbon_pkg']['features'], carb_imps), key=lambda x: x[1], reverse=True)[:4]
             carb_df = pd.DataFrame([
                 {
                     'Rank': f"{i}",
@@ -780,7 +816,8 @@ def main():
 
         with col_tign:
             st.markdown("##### Ignition Temp Features")
-            tign_ranked = sorted(zip(assets['tign_pkg']['features'], assets['tign_pkg']['model'].feature_importances_), key=lambda x: x[1], reverse=True)[:4]
+            tign_imps = get_model_feature_importances(assets['tign_pkg']['model'], len(assets['tign_pkg']['features']))
+            tign_ranked = sorted(zip(assets['tign_pkg']['features'], tign_imps), key=lambda x: x[1], reverse=True)[:4]
             tign_df = pd.DataFrame([
                 {
                     'Rank': f"{i}",

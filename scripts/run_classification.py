@@ -108,10 +108,24 @@ def main():
     fused_acc = accuracy_score(y_f_test, y_f_pred)
     fused_cm = confusion_matrix(y_f_test, y_f_pred)
 
+    from sklearn.model_selection import StratifiedKFold, cross_val_score
+    from sklearn.ensemble import ExtraTreesClassifier
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
     from sklearn.metrics import precision_score, recall_score, f1_score
+
+    cv_skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    fused_cv_model = Pipeline([
+        ('scaler', StandardScaler()),
+        ('classifier', ExtraTreesClassifier(n_estimators=180, max_depth=10, min_samples_split=2, random_state=42))
+    ])
+    fused_cv_scores = cross_val_score(fused_cv_model, X_all_fused, y_all, cv=cv_skf, scoring='accuracy')
+    fused_cv_mean = float(np.mean(fused_cv_scores))
+    fused_cv_std = float(np.std(fused_cv_scores))
+
     fused_rec = {
         'Model': 'Multimodal Fusion (PA + Proximate)',
-        'CV Accuracy (mean ± std)': '96.20% ± 2.10%',
+        'CV Accuracy (mean ± std)': f"{fused_cv_mean*100:.2f}% ± {fused_cv_std*100:.2f}%",
         'CV F1-Score': f"{f1_score(y_f_test, y_f_pred, average='macro'):.4f}",
         'Holdout Train Acc': '100.00%',
         'Holdout Test Acc': f"{fused_acc*100:.2f}%",
@@ -119,7 +133,7 @@ def main():
         'Holdout Recall': f"{recall_score(y_f_test, y_f_pred, average='macro'):.4f}",
         'Holdout F1-Score': f"{f1_score(y_f_test, y_f_pred, average='macro'):.4f}",
         'raw_test_acc': fused_acc,
-        'raw_cv_acc': 0.9620
+        'raw_cv_acc': fused_cv_mean
     }
     
     # Append fusion result
