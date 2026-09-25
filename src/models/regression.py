@@ -29,72 +29,103 @@ from sklearn.neural_network import MLPRegressor
 def get_regression_models(target_col: str = None) -> dict:
     """
     Returns a dictionary of candidate regression models wrapped in pipelines.
-    Includes target-specific optimized architectures (PowerTransformer, VotingRegressor, etc.).
+    Uses clean, standard machine learning model names and distinct architectures.
     """
+    target_lower = (target_col or '').lower()
     models = {}
 
-    target_lower = (target_col or '').lower()
-    
-    # 1. Target-Specific High Performance Architectures
     if 'ash' in target_lower:
-        models['PowerTransformer + Extra Trees (Optimized)'] = Pipeline([
-            ('scaler', PowerTransformer(method='yeo-johnson')),
-            ('regressor', ExtraTreesRegressor(n_estimators=200, max_depth=8, max_features=0.7, random_state=42))
-        ])
-        models['PowerTransformer + Gradient Boosting'] = Pipeline([
-            ('scaler', PowerTransformer(method='yeo-johnson')),
+        models['Extra Trees Regressor'] = ExtraTreesRegressor(
+            n_estimators=200, max_depth=8, max_features=0.7, random_state=42
+        )
+        models['Gradient Boosting (GBDT)'] = Pipeline([
+            ('scaler', StandardScaler()),
             ('regressor', GradientBoostingRegressor(n_estimators=160, learning_rate=0.03, max_depth=5, subsample=0.85, random_state=42))
         ])
+        models['Random Forest Regressor'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=3, random_state=42))
+        ])
+        models['Multi-Layer Perceptron (MLP)'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42))
+        ])
+        models['Histogram Gradient Boosting'] = HistGradientBoostingRegressor(
+            max_iter=120, learning_rate=0.05, max_depth=4, random_state=42
+        )
+        models['Ridge Linear Regression'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', Ridge(alpha=1.0, random_state=42))
+        ])
+        models['Support Vector Regressor (SVR)'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', SVR(C=10.0, epsilon=0.1))
+        ])
+
     elif 'carbon' in target_lower:
-        models['Tuned Extra Trees (Optimized)'] = Pipeline([
+        models['Extra Trees Regressor'] = Pipeline([
             ('scaler', StandardScaler()),
             ('regressor', ExtraTreesRegressor(n_estimators=150, max_depth=8, min_samples_split=3, random_state=42))
         ])
-        models['Tuned Gradient Boosting'] = Pipeline([
+        models['Gradient Boosting (GBDT)'] = Pipeline([
             ('scaler', StandardScaler()),
             ('regressor', GradientBoostingRegressor(n_estimators=160, learning_rate=0.03, max_depth=5, subsample=0.85, random_state=42))
         ])
+        models['Random Forest Regressor'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=3, random_state=42))
+        ])
+        models['Histogram Gradient Boosting'] = HistGradientBoostingRegressor(
+            max_iter=120, learning_rate=0.05, max_depth=4, random_state=42
+        )
+        models['Ridge Linear Regression'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', Ridge(alpha=1.0, random_state=42))
+        ])
+        models['Multi-Layer Perceptron (MLP)'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42))
+        ])
+        models['Support Vector Regressor (SVR)'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', SVR(C=10.0, epsilon=0.1))
+        ])
+
     elif 'ignition' in target_lower or 'temp' in target_lower or 'thermal' in target_lower:
-        models['QuantileTransformer + Voting Ensemble (Optimized)'] = Pipeline([
+        models['Ensemble Voting Regressor'] = Pipeline([
             ('scaler', QuantileTransformer(n_quantiles=50, random_state=42)),
             ('regressor', VotingRegressor([
                 ('et', ExtraTreesRegressor(n_estimators=200, max_features=1.0, random_state=42)),
                 ('gb', GradientBoostingRegressor(n_estimators=160, learning_rate=0.03, max_depth=5, subsample=0.85, random_state=42))
             ], weights=[0.65, 0.35]))
         ])
-        models['QuantileTransformer + Extra Trees'] = Pipeline([
+        models['Extra Trees Regressor'] = Pipeline([
             ('scaler', QuantileTransformer(n_quantiles=50, random_state=42)),
             ('regressor', ExtraTreesRegressor(n_estimators=200, max_depth=8, random_state=42))
         ])
-
-    # 2. General Candidate Regressors
-    models['Extra Trees'] = Pipeline([
-        ('scaler', StandardScaler()),
-        ('regressor', ExtraTreesRegressor(n_estimators=150, max_depth=8, min_samples_split=3, random_state=42))
-    ])
-    models['Gradient Boosting'] = Pipeline([
-        ('scaler', StandardScaler()),
-        ('regressor', GradientBoostingRegressor(n_estimators=120, learning_rate=0.05, max_depth=4, random_state=42))
-    ])
-    models['Random Forest'] = Pipeline([
-        ('scaler', StandardScaler()),
-        ('regressor', RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=3, random_state=42))
-    ])
-    models['Hist Gradient Boosting'] = HistGradientBoostingRegressor(
-        max_iter=120, learning_rate=0.05, max_depth=4, random_state=42
-    )
-    models['Ridge'] = Pipeline([
-        ('scaler', StandardScaler()),
-        ('regressor', Ridge(alpha=1.0, random_state=42))
-    ])
-    models['SVR (RBF)'] = Pipeline([
-        ('scaler', StandardScaler()),
-        ('regressor', SVR(C=10.0, epsilon=0.1))
-    ])
-    models['MLP Regressor'] = Pipeline([
-        ('scaler', StandardScaler()),
-        ('regressor', MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42))
-    ])
+        models['Gradient Boosting (GBDT)'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', GradientBoostingRegressor(n_estimators=120, learning_rate=0.05, max_depth=4, random_state=42))
+        ])
+        models['Random Forest Regressor'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', RandomForestRegressor(n_estimators=150, max_depth=8, min_samples_split=3, random_state=42))
+        ])
+        models['Histogram Gradient Boosting'] = HistGradientBoostingRegressor(
+            max_iter=120, learning_rate=0.05, max_depth=4, random_state=42
+        )
+        models['Support Vector Regressor (SVR)'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', SVR(C=10.0, epsilon=0.1))
+        ])
+        models['Ridge Linear Regression'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', Ridge(alpha=1.0, random_state=42))
+        ])
+        models['Multi-Layer Perceptron (MLP)'] = Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', MLPRegressor(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42))
+        ])
 
     return models
 
@@ -193,15 +224,16 @@ def run_benchmark_for_target(
         
         rec = {
             'Model': name,
-            'CV Test R² (mean ± std)': f"{cv_metrics['cv_test_r2_mean']:.4f} ± {cv_metrics['cv_test_r2_std']:.4f}",
-            'CV Test RMSE': f"{cv_metrics['cv_test_rmse_mean']:.3f} ± {cv_metrics['cv_test_rmse_std']:.3f}",
-            'CV Test MAE': f"{cv_metrics['cv_test_mae_mean']:.3f} ± {cv_metrics['cv_test_mae_std']:.3f}",
-            'Holdout Train R²': holdout_metrics['train_r2'],
-            'Holdout Test R²': holdout_metrics['test_r2'],
-            'Holdout Test RMSE': holdout_metrics['test_rmse'],
-            'Holdout Test MAE': holdout_metrics['test_mae'],
-            'Holdout Test MAPE (%)': f"{holdout_metrics['test_mape']:.2f}%",
-            'raw_cv_test_r2': cv_metrics['cv_test_r2_mean']
+            '5-Fold CV R²': f"{cv_metrics['cv_test_r2_mean']*100:.2f}% ± {cv_metrics['cv_test_r2_std']*100:.2f}%",
+            'CV RMSE': f"{cv_metrics['cv_test_rmse_mean']:.2f} ± {cv_metrics['cv_test_rmse_std']:.2f}",
+            'Holdout Train R²': f"{holdout_metrics['train_r2']*100:.2f}%",
+            'Holdout Test R²': f"{holdout_metrics['test_r2']*100:.2f}%",
+            'Holdout Test RMSE': f"{holdout_metrics['test_rmse']:.2f}",
+            'Holdout Test MAE': f"{holdout_metrics['test_mae']:.2f}",
+            'Holdout Test MAPE': f"{holdout_metrics['test_mape']:.2f}%",
+            'raw_test_r2': holdout_metrics['test_r2'],
+            'raw_cv_test_r2': cv_metrics['cv_test_r2_mean'],
+            'raw_test_rmse': holdout_metrics['test_rmse']
         }
         records.append(rec)
 
@@ -209,5 +241,6 @@ def run_benchmark_for_target(
             best_r2 = holdout_metrics['test_r2']
             best_model_obj = model
 
-    results_df = pd.DataFrame(records).sort_values(by='Holdout Test R²', ascending=False).reset_index(drop=True)
+    results_df = pd.DataFrame(records).sort_values(by='raw_test_r2', ascending=False).reset_index(drop=True)
+    results_df['Status'] = ['[Selected]' if i == 0 else '' for i in range(len(results_df))]
     return results_df, best_model_obj, (X_train, X_test, y_train, y_test)

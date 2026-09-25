@@ -35,35 +35,35 @@ from sklearn.neural_network import MLPClassifier
 def get_classification_models() -> dict:
     """
     Returns a dictionary of candidate classification models wrapped in scaling pipelines.
+    Uses clean, standard machine learning model names without duplicates.
     """
     return {
-        'Extra Trees (1000 Trees)': Pipeline([
+        'Extra Trees Classifier': Pipeline([
             ('scaler', StandardScaler()),
-            ('classifier', ExtraTreesClassifier(n_estimators=1000, random_state=42, n_jobs=-1))
+            ('classifier', ExtraTreesClassifier(n_estimators=300, max_depth=10, min_samples_split=2, random_state=42, n_jobs=-1))
         ]),
-        'Extra Trees': ExtraTreesClassifier(
-            n_estimators=150, max_depth=8, min_samples_split=3, random_state=42
-        ),
-        'Random Forest': RandomForestClassifier(
-            n_estimators=150, max_depth=8, min_samples_split=3, random_state=42
-        ),
-        'Fine KNN (k=5)': Pipeline([
-            ('scaler', StandardScaler()),
-            ('classifier', KNeighborsClassifier(n_neighbors=5, metric='euclidean', weights='distance'))
-        ]),
-        'SVM (RBF)': Pipeline([
+        'Support Vector Machine (SVM-RBF)': Pipeline([
             ('scaler', StandardScaler()),
             ('classifier', SVC(kernel='rbf', C=10.0, probability=True, random_state=42))
         ]),
-        'Ensemble Boosted Trees': GradientBoostingClassifier(
-            n_estimators=120, learning_rate=0.08, max_depth=4, random_state=42
-        ),
-        'Hist Gradient Boosting': HistGradientBoostingClassifier(
-            max_iter=120, learning_rate=0.08, max_depth=4, random_state=42
-        ),
-        'Neural Network (MLP)': Pipeline([
+        'Random Forest Classifier': Pipeline([
+            ('scaler', StandardScaler()),
+            ('classifier', RandomForestClassifier(n_estimators=150, max_depth=8, min_samples_split=3, random_state=42))
+        ]),
+        'Gradient Boosting (GBDT)': Pipeline([
+            ('scaler', StandardScaler()),
+            ('classifier', GradientBoostingClassifier(n_estimators=120, learning_rate=0.08, max_depth=4, random_state=42))
+        ]),
+        'Multi-Layer Perceptron (MLP)': Pipeline([
             ('scaler', StandardScaler()),
             ('classifier', MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42))
+        ]),
+        'Histogram Gradient Boosting': HistGradientBoostingClassifier(
+            max_iter=120, learning_rate=0.08, max_depth=4, random_state=42
+        ),
+        'K-Nearest Neighbors (KNN)': Pipeline([
+            ('scaler', StandardScaler()),
+            ('classifier', KNeighborsClassifier(n_neighbors=5, metric='euclidean', weights='distance'))
         ])
     }
 
@@ -162,13 +162,14 @@ def run_classification_benchmark(
         holdout = train_and_eval_holdout_classifier(
             model, X_train, X_test, y_train, y_test, target_names=classes_order
         )
+        correct_count = int(np.sum(holdout['y_pred_test'] == y_test))
+        total_test = len(y_test)
 
         rec = {
             'Model': name,
-            'CV Accuracy (mean ± std)': f"{cv_metrics['cv_test_acc_mean']*100:.2f}% ± {cv_metrics['cv_test_acc_std']*100:.2f}%",
-            'CV F1-Score': f"{cv_metrics['cv_test_f1_mean']:.4f}",
-            'Holdout Train Acc': f"{holdout['train_acc']*100:.2f}%",
-            'Holdout Test Acc': f"{holdout['test_acc']*100:.2f}%",
+            '5-Fold CV Accuracy': f"{cv_metrics['cv_test_acc_mean']*100:.2f}% ± {cv_metrics['cv_test_acc_std']*100:.2f}%",
+            'Holdout Test Accuracy': f"{holdout['test_acc']*100:.2f}%",
+            'Test Correct / Total': f"{correct_count} / {total_test}",
             'Holdout Precision': f"{holdout['test_precision']:.4f}",
             'Holdout Recall': f"{holdout['test_recall']:.4f}",
             'Holdout F1-Score': f"{holdout['test_f1']:.4f}",
@@ -183,5 +184,5 @@ def run_classification_benchmark(
             best_acc = holdout['test_acc']
             best_model_name = name
 
-    results_df = pd.DataFrame(records).sort_values(by='raw_test_acc', ascending=False).reset_index(drop=True)
+    results_df = pd.DataFrame(records).sort_values(by=['raw_test_acc', 'raw_cv_acc'], ascending=[False, False]).reset_index(drop=True)
     return results_df, trained_models, eval_details, (X_train, X_test, y_train, y_test, label_encoder)

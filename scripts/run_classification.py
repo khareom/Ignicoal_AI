@@ -68,7 +68,7 @@ def main():
     classes_order = label_encoder.classes_
 
     print("\nClassification Comparison Table:")
-    cols_display = ['Model', 'CV Accuracy (mean ± std)', 'Holdout Train Acc', 'Holdout Test Acc', 'Holdout Precision', 'Holdout Recall', 'Holdout F1-Score']
+    cols_display = ['Model', '5-Fold CV Accuracy', 'Holdout Test Accuracy', 'Test Correct / Total', 'Holdout Precision', 'Holdout Recall', 'Holdout F1-Score']
     print(results_df[cols_display].to_string(index=False))
 
     # 2. Multimodal Sensor Fusion Model
@@ -124,11 +124,10 @@ def main():
     fused_cv_std = float(np.std(fused_cv_scores))
 
     fused_rec = {
-        'Model': 'Multimodal Fusion (PA + Proximate)',
-        'CV Accuracy (mean ± std)': f"{fused_cv_mean*100:.2f}% ± {fused_cv_std*100:.2f}%",
-        'CV F1-Score': f"{f1_score(y_f_test, y_f_pred, average='macro'):.4f}",
-        'Holdout Train Acc': '100.00%',
-        'Holdout Test Acc': f"{fused_acc*100:.2f}%",
+        'Model': 'Multimodal Cascaded Fusion',
+        '5-Fold CV Accuracy': f"{fused_cv_mean*100:.2f}% ± {fused_cv_std*100:.2f}%",
+        'Holdout Test Accuracy': f"{fused_acc*100:.2f}%",
+        'Test Correct / Total': f"{int(np.sum(y_f_pred == y_f_test))} / {len(y_f_test)}",
         'Holdout Precision': f"{precision_score(y_f_test, y_f_pred, average='macro'):.4f}",
         'Holdout Recall': f"{recall_score(y_f_test, y_f_pred, average='macro'):.4f}",
         'Holdout F1-Score': f"{f1_score(y_f_test, y_f_pred, average='macro'):.4f}",
@@ -138,10 +137,12 @@ def main():
     
     # Append fusion result
     all_results = pd.concat([pd.DataFrame([fused_rec]), results_df], ignore_index=True)
-    all_results = all_results.sort_values(by='raw_test_acc', ascending=False).reset_index(drop=True)
+    all_results = all_results.sort_values(by=['raw_test_acc', 'raw_cv_acc'], ascending=[False, False]).reset_index(drop=True)
+    all_results['Status'] = ['[Selected]' if i == 0 else '' for i in range(len(all_results))]
 
+    cols_display_final = ['Model', '5-Fold CV Accuracy', 'Holdout Test Accuracy', 'Test Correct / Total', 'Holdout Precision', 'Holdout Recall', 'Holdout F1-Score', 'Status']
     print("\nUpdated Comparison with Fusion Pipeline:")
-    print(all_results[cols_display].to_string(index=False))
+    print(all_results[cols_display_final].to_string(index=False))
 
     # Save results
     csv_path = os.path.join(results_dir, 'classification_comparison.csv')
@@ -183,7 +184,7 @@ def main():
     # Model Accuracy Bar Chart
     plt.figure(figsize=(9, 5))
     plot_df = all_results.copy()
-    accs = [float(x.replace('%', '')) for x in plot_df['Holdout Test Acc']]
+    accs = [float(x.replace('%', '')) for x in plot_df['Holdout Test Accuracy']]
     colors = ['#2ca02c' if 'Fusion' in m else '#1f77b4' for m in plot_df['Model']]
     bars = plt.barh(plot_df['Model'], accs, color=colors, edgecolor='black', alpha=0.85)
     plt.xlim(70, 105)

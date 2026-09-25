@@ -845,7 +845,9 @@ def main():
                 csv_p = os.path.join(reg_dir, f"{tname}_comparison.csv")
                 if os.path.exists(csv_p):
                     st.markdown(f"**Target: {tname.replace('_', ' ')}**")
-                    st.dataframe(pd.read_csv(csv_p), hide_index=True)
+                    reg_df = pd.read_csv(csv_p)
+                    clean_cols = [c for c in reg_df.columns if not c.startswith('raw_')]
+                    st.dataframe(reg_df[clean_cols], hide_index=True, use_container_width=True)
 
             st.markdown("#### Regression Prediction Parity Plots")
             p_reg = os.path.join(BASE_DIR, 'results', 'presentation', 'regression_dashboard_3x1.png')
@@ -858,7 +860,9 @@ def main():
             if os.path.exists(clf_csv):
                 clf_df = pd.read_csv(clf_csv)
                 clean_cols = [c for c in clf_df.columns if not c.startswith('raw_')]
-                st.dataframe(clf_df[clean_cols], hide_index=True)
+                st.dataframe(clf_df[clean_cols], hide_index=True, use_container_width=True)
+
+            st.caption("Note: On the 36-sample holdout test set (20% split), each individual misclassification corresponds to exactly 2.78% (1/36). The 5-fold cross-validation accuracy provides the continuous, population-wide evaluation across all folds.")
 
             st.markdown("#### Model Accuracy Comparison & Confusion Matrix")
             col_c1, col_c2 = st.columns([1.4, 1.0])

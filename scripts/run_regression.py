@@ -74,7 +74,7 @@ def main():
         )
 
         print("\n  Comparison Table:")
-        cols_to_show = ['Model', 'CV Test R² (mean ± std)', 'Holdout Train R²', 'Holdout Test R²', 'Holdout Test RMSE', 'Holdout Test MAE']
+        cols_to_show = ['Model', '5-Fold CV R²', 'Holdout Train R²', 'Holdout Test R²', 'Holdout Test RMSE', 'Holdout Test MAE', 'Status']
         print(results_df[cols_to_show].to_string(index=False))
 
         # Save table to CSV
@@ -99,12 +99,12 @@ def main():
         max_val = max(max(y_test), max(y_pred))
         plt.plot([min_val, max_val], [min_val, max_val], 'r--', lw=2, label='Ideal 1:1 Parity')
         
-        test_r2 = results_df.iloc[0]['Holdout Test R²']
-        test_rmse = results_df.iloc[0]['Holdout Test RMSE']
-        test_mae = results_df.iloc[0]['Holdout Test MAE']
+        test_r2_str = results_df.iloc[0]['Holdout Test R²']
+        test_rmse_str = results_df.iloc[0]['Holdout Test RMSE']
+        test_mae_str = results_df.iloc[0]['Holdout Test MAE']
         best_name = results_df.iloc[0]['Model']
 
-        plt.title(f"{t['name'].replace('_', ' ')} Prediction ({best_name})\nTest R² = {test_r2:.3f}, RMSE = {test_rmse:.2f}{t['unit']}, MAE = {test_mae:.2f}{t['unit']}", fontsize=11)
+        plt.title(f"{t['name'].replace('_', ' ')} Prediction ({best_name})\nTest R² = {test_r2_str}, RMSE = {test_rmse_str} {t['unit']}, MAE = {test_mae_str} {t['unit']}", fontsize=11)
         plt.xlabel(f"Actual {t['name'].replace('_', ' ')} ({t['unit']})", fontsize=11)
         plt.ylabel(f"Predicted {t['name'].replace('_', ' ')} ({t['unit']})", fontsize=11)
         plt.legend(frameon=True)
