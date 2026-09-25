@@ -13,6 +13,7 @@ import pandas as pd
 import streamlit as st
 
 try:
+    os.environ.setdefault('MPLCONFIGDIR', '/tmp/matplotlib')
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
